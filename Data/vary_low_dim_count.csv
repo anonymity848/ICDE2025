@@ -1,0 +1,6 @@
+Algorithm,2dSkyline,3dSkyline,4dSkyline,5dSkyline
+AA,3.0,7.1,10.2,11.7
+EA,1.0,3.3,5.8,7.9
+UH-Random,4.8,8.8,12.6,21.5
+UH-Simplex,3.0,7.6,17.6,26.6
+singlePass,34.0,133.5,280.9,319.2
