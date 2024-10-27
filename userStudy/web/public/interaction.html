@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Study</title>
+    <style>
+        /* 页面和内容的基本样式 */
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 设置页面内容的居中布局 */
+        .container {
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 表格样式 */
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 1200px;
+            table-layout: fixed;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        /* 按钮样式调整，增大字体和外观 */
+        button {
+            padding: 5px 10px; /* 增大按钮的内边距 */
+            font-size: 15px;    /* 设置较大的字体 */
+            cursor: pointer;
+            width: 120px;
+            border-radius: 5px; /* 使按钮有圆角 */
+            background-color: #f0f0f0; /* 设置按钮背景色 */
+            border: 1px solid #ccc; /* 按钮边框 */
+        }
+
+        button:hover {
+            background-color: #e0e0e0; /* 悬停时改变按钮颜色 */
+        }
+
+        /* 隐藏不需要的行 */
+        .hidden {
+            display: none;
+        }
+
+        /* 评分按钮容器样式 */
+        .score-buttons {
+            margin-top: 20px;
+        }
+
+        .score-buttons button {
+            margin: 5px;
+            width: 50px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="headline"></h2>
+        <p id="message">Waiting for server message...</p>
+
+        <!-- 表格显示数据 -->
+        <table class="group-table">
+            <thead>
+                <tr id = "attributes">
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="group1"> 
+                </tr>
+                <tr id="group2" class="hidden">
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 评分按钮显示区域 -->
+        <div id="score-buttons" class="score-buttons hidden">
+            <p>Please rate the group (1-10):</p>
+        </div>
+
+        <div>
+            <p><strong>Reference Data 参考数据</strong></br>
+            Year 年份: 1997-2020 (年份越老越经典)</br>
+            Price 价格: 1490-137995<br>
+            Mileage 里程: 1-323000 (已行驶里程，数值越小车越新)</br>
+            Tax 税费: 0-580 (税费越低越好)</br>
+            MPG 油耗: 18.9-188.3 (每加仑行驶的里程数，数值越大越省油)</br>
+            Engine Size 排量:0-6.3 </p>
+        </div>
+    </div>
+
+    <script>
+        let socket = new WebSocket('ws://39.108.168.228:8090/');
+
+        socket.onopen = () => {
+            console.log('Connected to the server');
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            // 更新消息
+            if (data.message) {
+                document.getElementById('message').innerText = data.message;
+            }
+
+            if (!data.data_group_1 && !data.data_group_2)
+            {
+                try {
+                    window.location.href = "thank.html"; // 替换为你想跳转的页面
+                } catch (error) {
+                    console.error("页面跳转出错: ", error);
+                    alert("无法跳转页面，请稍后再试。");
+            }
+            }
+            // 处理数据组 1
+            if (data.data_group_1 && data.data_group_2) {
+                document.getElementById('attributes').innerHTML = '<th>Car 汽车</th><th>Year 年份</th><th>Price 价格</th><th>Mileage 里程</th><th>Tax 税费</th><th>MPG 油耗</th><th>Engine Size 排量</th><th></th>'
+                document.getElementById('group1').innerHTML = '<td>1</td>' + data.data_group_1.map(item => `<td>${item}</td>`).join('') + '<td><button onclick="sendChoiceToServer(1)">Choose 选择</button></td>';
+                document.getElementById('group2').classList.add('hidden'); // 隐藏 group2 行
+                document.getElementById('score-buttons').classList.remove('hidden'); // 显示评分按钮
+                generateScoreButtons(); // 生成 1-10 评分按钮
+            }
+            else if (data.data_group_1) {
+                document.getElementById('attributes').innerHTML = '<th>Car 汽车</th><th>Year 年份</th><th>Price 价格</th><th>Mileage 里程</th><th>Tax 税费</th><th>MPG 油耗</th><th>Engine Size 排量</th>'
+                document.getElementById('group1').innerHTML = '<td>1</td>' + data.data_group_1.map(item => `<td>${item}</td>`).join('');
+                document.getElementById('group2').classList.add('hidden'); // 隐藏 group2 行
+                document.getElementById('score-buttons').classList.remove('hidden'); // 显示评分按钮
+                generateScoreButtons(); // 生成 1-10 评分按钮
+            }
+
+            // 处理数据组 2
+            if (data.data_group_2) {
+                document.getElementById('headline').innerText = 'Question ' + data.integer_value;
+                document.getElementById('group2').classList.remove('hidden'); // 显示 group2 行
+                document.getElementById('group2').innerHTML = '<td>2</td>' + data.data_group_2.map(item => `<td>${item}</td>`).join('') + '<td><button onclick="sendChoiceToServer(2)">Choose 选择</button></td>';
+                document.getElementById('score-buttons').classList.add('hidden'); // 隐藏评分按钮
+            } else {
+                document.getElementById('headline').innerText = 'Evaluation';
+                document.getElementById('group2').innerHTML = ''; // 清空 group2 行
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('Connection closed');
+        };
+
+        // 发送评分到服务器
+        function sendScoreToServer(score) {
+            socket.send(JSON.stringify({ score: score }));
+        }
+
+        // 生成 1-10 的评分按钮
+        function generateScoreButtons() {
+            const scoreButtonsContainer = document.getElementById('score-buttons');
+            scoreButtonsContainer.innerHTML = '<p>Please press the button to rate. </br> 请点击按钮来打分</p>'; // 清空并重新生成按钮
+            for (let i = 1; i <= 10; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = () => sendScoreToServer(i);
+                scoreButtonsContainer.appendChild(button);
+            }
+        }
+
+        function sendChoiceToServer(choice) {
+            if (socket.readyState === WebSocket.OPEN) {
+                console.log("Sending choice to server: ", choice);
+                socket.send(JSON.stringify({ choice: choice }));
+            } else {
+            console.error("WebSocket is not open. Cannot send message.");
+            }
+        }
+    </script>
+</body>
+</html>

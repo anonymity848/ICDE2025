@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Form</title>
+    <style>
+        /* 让整个页面居中 */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* 使得内容占满整个视口高度 */
+            margin: 0; /* 清除默认的 body 外边距 */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center; /* 标题居中 */
+        }
+
+        /* 格式化文本区域 */
+        #consentText {
+            max-width: 800px;
+            text-align: left;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            overflow-y: auto;
+        }
+
+        /* 按钮的样式 */
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome!</h1>
+
+    <h3>Consent Form 同意书</h3>
+    <!-- 英文和中文文本显示区域 -->
+    <div id="consentText">
+        <p>The objective of this study is to design an innovative database system capable of interacting with users to learn their preferences and subsequently retrieve tuples based on these learned preferences. You will be interacting with an interactive database system by answering a few easy questions for about 30-60 minutes. We expect we can evaluate the interactive database system based on your feedback.</p>
+
+        <p>The data collected during the study will not contain any identity information of the Participant and will be used solely to analyze the performance of the interactive database system. The data will not be used for any other purpose.</p>
+
+        <p>We want to assure you that any data collected during this study will remain strictly confidential. We will take all necessary steps to protect your personal information and ensure that it is not shared with any unauthorized individuals or organizations. We promise that we will not disclose any individual sensitive data that may be obtained through this study. However, we may disclose general statistics, such as the overall findings of the study, to third parties.</p>
+
+        <p>Your participation in this study is voluntary, and you have the right to decline to answer any question or to withdraw from the survey at any time without any penalty or negative consequences.</p>
+
+        <p>Please press the button below to continue. This indicates you have read and fully understood what is stated in this consent form, and you are willing to participate in this study.</p>
+
+        <br><br>
+
+        <p>本研究的目的是设计一个交互式数据库系统，该系统能够与用户互动，学习他们的偏好，并基于这些学习到的偏好进行查询检索。您将通过回答一些简单的问题与交互式数据库系统互动，整个过程大约持续 30-60 分钟。我们希望通过您的反馈来评估交互式数据库系统。</p>
+
+        <p>在研究过程中收集的数据不会包含参与者的任何身份信息，这些数据将仅用于分析交互式数据库系统的性能。这些数据不会用于任何其他目的。</p>
+
+        <p>我们向您保证，在此研究中收集的任何数据将严格保密。我们会采取一切必要措施来保护您的个人信息，确保其不会与任何未经授权的个人或组织共享。我们承诺不会披露通过本研究获得的任何个人敏感数据。然而，我们可能会向第三方披露本研究的一些总体统计数据，例如研究的整体结果。</p>
+
+        <p>您参与本研究是自愿的，您有权拒绝回答任何问题，或在任何时候退出调查，且不会受到任何惩罚或负面影响。</p>
+
+        <p>请点击按钮继续，表示您已阅读并完全理解本同意书中的内容并且您愿意参与本研究。</p>
+    </div>
+
+    <!-- 按钮 -->
+    <button onclick="goToNewPage()">继续</button>
+
+    <script>
+        // 跳转到新页面
+        function goToNewPage() {
+            try {
+                window.location.href = "introduction.html"; // 替换为你想跳转的页面
+            } catch (error) {
+                console.error("页面跳转出错: ", error);
+                alert("无法跳转页面，请稍后再试。");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -221,8 +221,6 @@ def highRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainni
             if (epo + 1) % 10000 == 0:
                 print("Model saved: " + '_high_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
                 torch.save(brain.Q_eval.state_dict(), '_high_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
-
-    torch.save(brain.Q_eval.state_dict(), '_high_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(trainning_epoch) + '_' + str(action_space_size) + '_' + '.mdl')
     print("Model training time: ", time.time() - start_time)
 
     ##################################################
@@ -258,10 +256,12 @@ def highRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainni
             h = Hyperplane(p1=h_cand[action].p2, p2=h_cand[action].p1)
             utility_range.hyperplanes.append(h)
             pivot_pt = h_cand[action].p1
+            pset.printMiddleSelection(num_question, u, "AA", dataset_name, h_cand[action].p1, h_cand[action].p2, 1, epsilon)
         else:
             h = Hyperplane(p1=h_cand[action].p1, p2=h_cand[action].p2)
             utility_range.hyperplanes.append(h)
             pivot_pt = h_cand[action].p2
+            pset.printMiddleSelection(num_question, u, "AA", dataset_name, h_cand[action].p1, h_cand[action].p2, 2, epsilon)
 
         state = utility_range.get_state_high()  # part of state
         dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
@@ -287,3 +287,142 @@ def highRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainni
     rr = 1 - result.dot_prod(u) / best.dot_prod(u)
     print("Regret: ", rr)
     result.printToFile2("AA", dataset_name, epsilon, num_question, start_time, rr, trainning_epoch, action_space_size)
+
+    pset.printFinal(result, num_question, u, "AA", dataset_name, epsilon)
+
+# It is used for verify the usefulness of our action space construction
+# It randomly selects hyper-planes to construct the action space
+def highRL_Random(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainning_epoch=10000, action_space_size=5):
+    start_time = time.time()
+    torch.manual_seed(0)
+    np.random.seed(0)
+    dim = pset.points[0].dim
+    # action_space_size = 5
+
+    training_epsilon = 0.05
+    # init agent
+    brain = Agent(gamma=0.80, epsilon=0.9, alpha=0.003, maxMemorySize=5000, batch_size=64, action_space_size=action_space_size, dim=dim, is_gpu=True)
+    if train:  # training
+        recent_average_quetions = deque(maxlen=200)
+        for epo in range(trainning_epoch):
+            t1 = time.time()
+            trainning_question = 0
+            utility_range = HyperplaneSet(dim)
+            trainning_sample_u = utility_range.sample_vector()
+            state = utility_range.get_state_high()  # part of state
+            dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
+            pivot_pt = pset.find_top_k(utility_range.sample_vector(), 1)[0]
+            while dist > training_epsilon * np.sqrt(dim) * 2:  # stopping condition
+                h_cand = utility_range.find_candidate_hyperplanes_random(pset, action_space_size, pivot_pt, epsilon)
+                if len(h_cand) <= 0:
+                    break
+                while len(h_cand) < action_space_size:
+                    h_cand.append(h_cand[0])
+                for i in range(action_space_size):
+                    state = np.concatenate((state, h_cand[i].norm))
+                action = brain.chooseAction(state)
+                brain.state_action_pairs.append([state, action])
+
+                # interaction
+                trainning_question += 1
+                value1 = trainning_sample_u.dot_prod(h_cand[action].p1)
+                value2 = trainning_sample_u.dot_prod(h_cand[action].p2)
+                if value1 > value2:
+                    h = Hyperplane(p1=h_cand[action].p2, p2=h_cand[action].p1)
+                    utility_range.hyperplanes.append(h)
+                    pivot_pt = h_cand[action].p1
+                else:
+                    h = Hyperplane(p1=h_cand[action].p1, p2=h_cand[action].p2)
+                    utility_range.hyperplanes.append(h)
+                    pivot_pt = h_cand[action].p2
+
+                state = utility_range.get_state_high()  # part of state
+                dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
+                # if dim <= 6 and utility_range.check_stopping_condition(pset, training_epsilon) is not None:
+                #    break
+
+            # include the last state
+            state = np.append(state, np.zeros(action_space_size * dim))
+            brain.state_action_pairs.append([state, -1])
+
+            # compute reward
+            ind = 0
+            while ind < len(brain.state_action_pairs) - 2:
+                brain.storeTransition(brain.state_action_pairs[ind][0], brain.state_action_pairs[ind][1],0, brain.state_action_pairs[ind + 1][0])
+                ind = ind + 1
+            brain.storeTransition(brain.state_action_pairs[ind][0], brain.state_action_pairs[ind][1],100, brain.state_action_pairs[ind + 1][0])
+            brain.learn()
+            brain.state_action_pairs = []
+            recent_average_quetions.append(trainning_question)
+            print("Episode: ", epo, "Question: ", trainning_question, "Average: ", sum(recent_average_quetions)/len(recent_average_quetions), "Time: ", time.time() - t1)
+            if (epo + 1) % 10000 == 0:
+                print("Model saved: " + '_highRandom_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
+                torch.save(brain.Q_eval.state_dict(), '_highRandom_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
+    print("Model training time: ", time.time() - start_time)
+
+    ##################################################
+    ##################################################
+    # use the trained model to interact
+    start_time = time.time()
+    brain = Agent(gamma=0.80, epsilon=1.0, alpha=0.003, maxMemorySize=5000, batch_size=64, action_space_size=action_space_size, dim=dim, is_gpu=False)
+    brain.Q_eval.load_state_dict(torch.load('_highRandom_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(trainning_epoch) + '_' + str(action_space_size) + '_' + '.mdl'))
+    brain.EPSILON = 0
+    num_question = 0
+    result = None
+
+    utility_range = HyperplaneSet(dim)
+    state = utility_range.get_state_high()  # part of state
+    dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
+    print("dist: ", dist)
+    pivot_pt = pset.find_top_k(utility_range.sample_vector(), 1)[0]
+    while dist > epsilon * np.sqrt(dim) * 2:  # stopping condition
+        h_cand = utility_range.find_candidate_hyperplanes_random(pset, action_space_size, pivot_pt, epsilon)
+        if len(h_cand) <= 0:
+            break
+        while len(h_cand) < action_space_size:
+            h_cand.append(h_cand[0])
+        for i in range(action_space_size):
+            state = np.concatenate((state, h_cand[i].norm))
+        action = brain.chooseAction(state)
+
+        # interaction
+        num_question += 1
+        value1 = u.dot_prod(h_cand[action].p1)
+        value2 = u.dot_prod(h_cand[action].p2)
+        if value1 > value2:
+            h = Hyperplane(p1=h_cand[action].p2, p2=h_cand[action].p1)
+            utility_range.hyperplanes.append(h)
+            pivot_pt = h_cand[action].p1
+            pset.printMiddleSelection(num_question, u, "AA-Random", dataset_name, h_cand[action].p1, h_cand[action].p2, 1, epsilon)
+        else:
+            h = Hyperplane(p1=h_cand[action].p1, p2=h_cand[action].p2)
+            utility_range.hyperplanes.append(h)
+            pivot_pt = h_cand[action].p2
+            pset.printMiddleSelection(num_question, u, "AA-Random", dataset_name, h_cand[action].p1, h_cand[action].p2, 2, epsilon)
+
+        state = utility_range.get_state_high()  # part of state
+        dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
+        print("dist: ", dist)
+        '''
+        if dim <= 5:
+            if num_question > 12:
+                break
+            utility_range.cal_regret(pset, "AA", dataset_name, num_question)
+        else:
+            if num_question > 22:
+                break
+            utility_range.cal_regret_hit_and_run_sample(pset, "AA", dataset_name, num_question)
+        # utility_range.print_time("AA", dataset_name, num_question, start_time)
+        '''
+
+    # print results
+    cor_center = Point(dim)
+    cor_center.coord = (utility_range.upper_point.coord + utility_range.lower_point.coord) / 2
+    result = pset.find_top_k(cor_center, 1)[0]
+    result.printAlgResult("AA-Random", num_question, start_time, 0)
+    best = pset.find_top_k(u, 1)[0]
+    rr = 1 - result.dot_prod(u) / best.dot_prod(u)
+    print("Regret: ", rr)
+    result.printToFile2("AA-Random", dataset_name, epsilon, num_question, start_time, rr, trainning_epoch, action_space_size)
+
+    # pset.printFinal(result, num_question, u, "AA", dataset_name, epsilon)

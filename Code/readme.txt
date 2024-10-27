@@ -7,13 +7,16 @@ a. Algorithm EA
 b. Algorithm AA 
 	1. It is an approximate algorithm designed by us. 
 	2. The code is in file highRL.py.
-c. Algorithm UH-Random
+c. Algorithm AA-Random 
+	1. It is an approximate algorithm designed by us with randomly selected action space. 
+	2. The code is in file highRL.py.
+d. Algorithm UH-Random
 	1. It is the SOTA algorithm used for comparison. 
 	2. The code is in file uh.py.
-d. Algorithm UH-Simplex 
+e. Algorithm UH-Simplex 
 	1. It is an existing algorithm used for comparison. 
 	2. The code is in folder uh.py.
-e. Algorithm SinglePass
+f. Algorithm SinglePass
 	1. It is an existing algorithm used for comparison. 
 	2. The code is in folder single_pass.py.
 

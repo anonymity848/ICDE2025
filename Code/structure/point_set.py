@@ -1,3 +1,5 @@
+import os
+
 from structure.point import Point
 import numpy as np
 from scipy import sparse
@@ -219,6 +221,117 @@ class PointSet:
             return True
         else:
             return False
+
+    def printMiddleSelection(self, num_question, u, alg_name, dataset_name, p1, p2, selection, epsilon):
+        folder_path = f"../Question_Record/{alg_name}_{dataset_name}_{epsilon}"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            print(f"{folder_path} has been created.")
+
+        folder_path += f"/u={u.coord[0]}.txt"
+        if num_question == 1:
+            with open(f"{folder_path}", "a") as out_cp:  # "a" represents adding to the end of the file
+                out_cp.write(f"The generated utility vector is u = [" + " ".join(f"{coord:.8f}" for coord in u.coord) +
+                             "] \n\n\n")
+
+        d = p1.dim
+        with (open(f"{folder_path}", "a") as out_cp):  # "a" represents adding to the end of the file
+            out_cp.write(f"Question {num_question}: \n")
+            col_width = 15
+            horizontal_border = "+" + "+".join(["-" * col_width for _ in range(d + 1)]) + "+\n"
+            if dataset_name == 'audiSkyline':
+                header = "|" + "Tuple".center(col_width) + "|" + "Year".center(col_width) + "|" + "Price".center(col_width) + "|" + "Mileage".center(
+                    col_width) + "|" + "Tax".center(col_width) + "|" + "Power".center(col_width) + "|" + "Engine Size".center(col_width) + "|\n"
+            elif dataset_name == 'players':
+                header = "|" + "Tuple".center(col_width) + "|" + "Age".center(col_width) + "|" + "G".center(
+                    col_width) + "|" + "MP".center(col_width) + "FG".center(col_width) + "|" + "FG%".center(
+                    col_width) + "|" + "3P".center(col_width) + "|" + "3P%".center(col_width) + "|" + "2P".center(
+                    col_width) + "|" + "2P%".center(col_width) + "|" + "eFG%".center(col_width) + "|" + "FT".center(
+                    col_width) + "|" + "FT%".center(col_width) + "|" + "ORB".center(col_width) + "|" + "DRB".center(
+                    col_width) + "|" + "AST".center(col_width) + "|" + "STL".center(col_width) + "|" + "BLK".center(
+                    col_width) + "|" + "TOV".center(col_width) + "|" + "PF".center(col_width) + "|" + "PTS".center(
+                    col_width) + "|" + "|\n"
+            else:
+                header = "|" + "Tuple".center(col_width) + "|" + "|".join(
+                    [f"Attribute {i + 1}".center(col_width) for i in range(d)]) + "|\n"
+
+            # 输出边框和表头
+            out_cp.write(horizontal_border)
+            out_cp.write(header)
+            out_cp.write(horizontal_border)
+
+            if dataset_name == 'audiSkyline':
+                pset_org = PointSet(f'audi_orgSkyline.txt')
+                p1 = pset_org.points[p1.id]
+                p2 = pset_org.points[p2.id]
+            elif dataset_name == 'players':
+                pset_org = PointSet(f'players_org.txt')
+                p1 = pset_org.points[p1.id]
+                p2 = pset_org.points[p2.id]
+
+            # 输出每个 Tuple 的内容，使用相同的宽度并居中对齐
+            tuple_1 = "|" + "Tuple 1".center(col_width) + "|" + "|".join(
+                [str(p1.coord[i]).center(col_width) for i in range(d)]) + "|\n"
+            tuple_2 = "|" + "Tuple 2".center(col_width) + "|" + "|".join(
+                [str(p2.coord[i]).center(col_width) for i in range(d)]) + "|\n"
+
+            out_cp.write(tuple_1)
+            out_cp.write(horizontal_border)
+            out_cp.write(tuple_2)
+            out_cp.write(horizontal_border)
+            out_cp.write(f"The user selects Point {selection} as his/her preferred one.\n\n")
+
+    def printFinal(self, result_point, num_question, u, alg_name, dataset_name, epsilon):
+        folder_path = f"../Question_Record/{alg_name}_{dataset_name}_{epsilon}"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            print(f"{folder_path} has been created.")
+
+        folder_path += f"/u={u.coord[0]}.txt"
+
+        d = result_point.dim
+        with (open(f"{folder_path}", "a") as out_cp):  # "a" represents adding to the end of the file
+            out_cp.write(f"\nThe finally returned tuple: \n")
+            col_width = 15
+            print(dataset_name)
+            horizontal_border = "+" + "+".join(["-" * col_width for _ in range(d + 1)]) + "+\n"
+            if dataset_name == 'audiSkyline':
+                header = "|" + "Tuple".center(col_width) + "|" + "Year".center(col_width) + "|" + "Price".center(
+                    col_width) + "|" + "Mileage".center(
+                    col_width) + "|" + "Tax".center(col_width) + "|" + "Power".center(
+                    col_width) + "|" + "Engine Size".center(col_width) + "|\n"
+            elif dataset_name == 'players':
+                header = "|" + "Tuple".center(col_width) + "|" + "Age".center(col_width) + "|" + "G".center(
+                    col_width) + "|" + "MP".center(col_width) + "FG".center(col_width) + "|" + "FG%".center(
+                    col_width) + "|" + "3P".center(col_width) + "|" + "3P%".center(col_width) + "|" + "2P".center(
+                    col_width) + "|" + "2P%".center(col_width) + "|" + "eFG%".center(col_width) + "|" + "FT".center(
+                    col_width) + "|" + "FT%".center(col_width) + "|" + "ORB".center(col_width) + "|" + "DRB".center(
+                    col_width) + "|" + "AST".center(col_width) + "|" + "STL".center(col_width) + "|" + "BLK".center(
+                    col_width) + "|" + "TOV".center(col_width) + "|" + "PF".center(col_width) + "|" + "PTS".center(
+                    col_width) + "|" + "|\n"
+            else:
+                header = "|" + "Tuple".center(col_width) + "|" + "|".join(
+                    [f"Attribute {i + 1}".center(col_width) for i in range(d)]) + "|\n"
+
+            # 输出边框和表头
+            out_cp.write(horizontal_border)
+            out_cp.write(header)
+            out_cp.write(horizontal_border)
+
+            if dataset_name == 'audiSkyline':
+                pset_org = PointSet(f'audi_orgSkyline.txt')
+                result_point = pset_org.points[result_point.id]
+            elif dataset_name == 'players':
+                pset_org = PointSet(f'players_org.txt')
+                result_point = pset_org.points[result_point.id]
+
+            # 输出每个 Tuple 的内容，使用相同的宽度并居中对齐
+            tuple_1 = "|" + "Tuple".center(col_width) + "|" + "|".join(
+                [str(result_point.coord[i]).center(col_width) for i in range(d)]) + "|\n"
+            out_cp.write(tuple_1)
+            out_cp.write(horizontal_border)
+            out_cp.write(f"The total number of questions asked: {num_question} \n")
+
 
 '''
 x = Point(2, coord=np.array([2, 2]))

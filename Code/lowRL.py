@@ -166,7 +166,7 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
     mp = dim  # number of representative polyhedra
     me = dim  # number of representative extreme points
 
-    input_size = (dim + 1 + dim * me) + action_space_size * dim
+    input_size = mp * (dim + 1 + dim * me) + action_space_size * dim
     training_epsilon = 0.05
     # init agent
     brain = AgentLow(gamma=0.80, epsilon=0.9, alpha=0.003, maxMemorySize=5000, batch_size=64, action_space_size=action_space_size, input_size=input_size, is_gpu=True)
@@ -178,7 +178,7 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
             trainning_question = 0
             while True:  # stopping condition
                 # part of state
-                p_candidate, state = utility_range.get_state_low_abla(pset, dim, training_epsilon, me, mp, action_space_size)
+                p_candidate, state = utility_range.get_state_low(pset, dim, training_epsilon, me, mp)
                 if len(p_candidate) <= 1:
                     break
                 # state size mp * (dim + 1 + dim * me)
@@ -234,15 +234,27 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
             if (epo + 1) % 10000 == 0:
                 print("Model saved: " + '_low_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
                 torch.save(brain.Q_eval.state_dict(), '_low_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(epo + 1) + '_' + str(action_space_size) + '_' + '.mdl')
-    torch.save(brain.Q_eval.state_dict(), '_low_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(trainning_epoch) + '_' + str(action_space_size) + '_' + '.mdl')
     print("Model training time: ", time.time() - start_time)
 
     ##################################################
     ##################################################
     # use the trained model to interact
+    folder_path = f"../Question_Record/EA_{dataset_name}_{epsilon}"
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"{folder_path} has been created.")
+    else:
+        print(f"{folder_path} has already existed. ")
+
+    folder_path += f"/u={u.coord}.txt"
+
     start_time = time.time()
     brain = AgentLow(gamma=0.80, epsilon=1.0, alpha=0.003, maxMemorySize=5000, batch_size=64, action_space_size=action_space_size, input_size=input_size, is_gpu=False)
     brain.Q_eval.load_state_dict(torch.load('_low_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(trainning_epoch) + '_' + str(action_space_size) + '_' + '.mdl'))
+    # device_cpu = torch.device('cpu')  # CPU 设备
+    # brain.Q_eval.to(device_cpu)
+    # 保存模型的权重到一个新的文件，不包括其他状态
+    # torch.save(brain.Q_eval.state_dict(), 'cpu_low_model_dim_' + dataset_name + '_' + str(epsilon) + '_' + str(trainning_epoch) + '_' + str(action_space_size) + '_' + '.mdl')
     brain.EPSILON = 0
     num_question = 0
     result = None
@@ -250,7 +262,7 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
     utility_range = HyperplaneSet(dim)
     while True:  # stopping condition
         # part of state
-        p_candidate, state = utility_range.get_state_low_abla(pset, dim, epsilon, me, mp, action_space_size)
+        p_candidate, state = utility_range.get_state_low(pset, dim, epsilon, me, mp)
         if len(p_candidate) <= 1:
             result = p_candidate[0]
             break
@@ -287,9 +299,11 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
         if value1 > value2:
             h = Hyperplane(p1=h_cand[action].p2, p2=h_cand[action].p1)
             utility_range.hyperplanes.append(h)
+            pset.printMiddleSelection(num_question, u, "EA", dataset_name, h_cand[action].p1, h_cand[action].p2, 1, epsilon)
         else:
             h = Hyperplane(p1=h_cand[action].p1, p2=h_cand[action].p2)
             utility_range.hyperplanes.append(h)
+            pset.printMiddleSelection(num_question, u, "EA", dataset_name, h_cand[action].p1, h_cand[action].p2, 2, epsilon)
         utility_range.set_ext_pts()
         # utility_range.cal_regret(pset, "EA", dataset_name, num_question)
         # utility_range.print_time("EA", dataset_name, num_question, start_time)
@@ -300,3 +314,5 @@ def lowRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainnin
     rr = 1 - result.dot_prod(u) / best.dot_prod(u)
     print("Regret: ", rr)
     result.printToFile2("EA", dataset_name, epsilon, num_question, start_time, rr, trainning_epoch, action_space_size)
+
+    pset.printFinal(result, num_question, u, "EA", dataset_name, epsilon)

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Form</title>
+    <style>
+        /* 让整个页面居中 */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* 使得内容占满整个视口高度 */
+            margin: 0; /* 清除默认的 body 外边距 */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center; /* 标题居中 */
+        }
+
+        /* 格式化文本区域 */
+        #consentText {
+            max-width: 800px;
+            text-align: left;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            overflow-y: auto;
+        }
+
+        /* 按钮的样式 */
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">
+    Welcome to the Recommending Car System <br> 
+    欢迎使用车辆推荐系统
+    </h2>
+    <!-- 英文和中文文本显示区域 -->
+    <div id="consentText">
+        <p>In our research project, we aim to interact with you by asking questions to identify your favorite used car from our database. The system consists of 5 rounds, with each round corresponding to a different algorithm. In each round, you will answer a series of consecutive questions. For each question, two cars will be presented, and you need to choose the one you prefer. At the end of each round, a car will be recommended to you. Based on the recommended car and the number of questions you have answered, you need to evaluate the algorithms by assigning scores.</p>
+
+        <p>在我们的研究项目中，我们希望通过问问题的方式与您交互，从而能在我们的车辆数据库中找出您最喜欢的二手车。系统共分为 4 轮，每轮对应一个不同的算法。在每一轮中，系统将向您连续提出几个问题。每个问题会展示两辆车，您需要选择您更喜欢的一辆。每当一轮结束后，系统会给您推荐一辆车，请根据推荐车的质量和问题数量对每一轮进行评分。</p>
+
+    </div>
+
+    <div>
+        <p style="text-align: center;">Press the button to continue. <br> 请在按下按钮后继续。</p>
+    </div>
+
+    <!-- 按钮 -->
+    <button onclick="goToNewPage()">继续</button>
+
+    <script>
+        // 跳转到新页面
+        function goToNewPage() {
+            try {
+                window.location.href = "interaction.html"; // 替换为你想跳转的页面
+            } catch (error) {
+                console.error("页面跳转出错: ", error);
+                alert("无法跳转页面，请稍后再试。");
+            }
+        }
+    </script>
+</body>
+</html>

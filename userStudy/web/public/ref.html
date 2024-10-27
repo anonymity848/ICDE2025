@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive WebSocket</title>
+    <style>
+        /* 让整个页面居中 */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* 使得内容占满整个视口高度 */
+            margin: 0; /* 清除默认的 body 外边距 */
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center; /* 标题居中 */
+        }
+
+        /* 格式化服务器消息区域 */
+        #response {
+            overflow-y: auto;
+            white-space: pre-wrap; /* 保留换行和空格 */
+        }
+
+        /* 输入框和按钮的样式 */
+        #userInput {
+            width: 300px;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        /* 隐藏元素的样式 */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Interaction</h1>
+    <p id="serverMessage">Connecting to server...</p>
+
+    <!-- 响应区域 -->
+    <pre id="response"></pre>
+
+    <!-- 用户输入和发送按钮 -->
+    <input type="text" id="userInput" placeholder="">
+    <button onclick="sendMessage()">OK</button>
+
+    <script>
+        var ws = new WebSocket('ws://localhost:9002/');
+
+        // 当 WebSocket 连接打开时
+        ws.onopen = function() {
+            document.getElementById('serverMessage').innerText = "";
+        };
+
+        window.onbeforeunload = function() {
+            ws.close();  // 用户离开或刷新页面时，主动关闭连接
+        };
+
+        ws.onclose = function(event) {
+            console.log('Connection closed:', event);
+        };
+
+        // 当收到服务器消息时
+        ws.onmessage = function(event) {
+            document.getElementById('response').innerText = event.data;
+            document.getElementById('userInput').value = "";  // 清空输入框
+            
+            // 如果收到的消息是 "Thank you!"，隐藏输入框和按钮
+            if (event.data === "Thank you!") {
+                document.getElementById('userInput').classList.add('hidden');
+                document.querySelector('button').classList.add('hidden');
+            }
+        };
+
+        // 发送用户输入到服务器
+        function sendMessage() {
+            var input = document.getElementById('userInput').value;
+            if (input !== "") {
+                ws.send(input);  // 将用户输入发送到服务器
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+            

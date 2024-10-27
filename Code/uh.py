@@ -125,7 +125,7 @@ def generate_S(P: List[Point], C_idx: List[int], s, current_best_idx, last_best,
  */
  """
 def update_ext_vec(P: List[Point], C_idx: List[int], u: Point, s, hset: HyperplaneSet, current_best_idx, last_best,
-                   frame: List[Point], cmp_option):
+                   frame: List[Point], cmp_option, num_question, dataset_name, epsilon):
     S = generate_S(P, C_idx, s, current_best_idx, last_best, frame, cmp_option)
 
     max_idx = -1
@@ -136,6 +136,21 @@ def update_ext_vec(P: List[Point], C_idx: List[int], u: Point, s, hset: Hyperpla
         if value > max_value:
             max_value = value
             max_idx = i
+
+    value1 = u.dot_prod(P[C_idx[S[0]]])
+    value2 = u.dot_prod(P[C_idx[S[1]]])
+    pset_org = PointSet()
+    if cmp_option == constant.SIMPlEX:
+        if value1 > value2:
+            pset_org.printMiddleSelection(num_question, u, "UH-Simplex", dataset_name, P[C_idx[S[0]]], P[C_idx[S[1]]], 1, epsilon)
+        else:
+            pset_org.printMiddleSelection(num_question, u, "UH-Simplex", dataset_name, P[C_idx[S[0]]], P[C_idx[S[1]]], 2, epsilon)
+
+    else:
+        if value1 > value2:
+            pset_org.printMiddleSelection(num_question, u, "UH-Random", dataset_name, P[C_idx[S[0]]], P[C_idx[S[1]]], 1, epsilon)
+        else:
+            pset_org.printMiddleSelection(num_question, u, "UH-Random", dataset_name, P[C_idx[S[0]]], P[C_idx[S[1]]], 2, epsilon)
 
     last_best = current_best_idx
     current_best_idx = C_idx[max_idx]
@@ -170,11 +185,13 @@ def max_utility(pset: PointSet, u: Point, s, epsilon, maxRound, cmp_option, stop
     while len(C_idx) > 1 and (rr > epsilon and not others.isZero(rr - epsilon)) and num_question < maxRound:
         num_question += 1
         C_idx.sort()
-        C_idx, last_best, current_best_idx = update_ext_vec(pset.points, C_idx, u, s, hset, current_best_idx, last_best, frame, cmp_option)
+        C_idx, last_best, current_best_idx = update_ext_vec(pset.points, C_idx, u, s, hset, current_best_idx,
+                                                            last_best, frame, cmp_option, num_question, dataset, epsilon)
         if len(C_idx) == 1:
             break
         C_idx, rr = hset.rtree_prune(pset.points, C_idx, stop_option)
         print(f"Round {num_question}: {len(C_idx)} points left, Regret: {rr}")
+        '''
         if cmp_option == constant.RANDOM:
             hset.cal_regret(pset, "UH-Random", dataset, num_question)
             # hset.print_time("UH-Random", dataset, num_question, start_time)
@@ -183,7 +200,7 @@ def max_utility(pset: PointSet, u: Point, s, epsilon, maxRound, cmp_option, stop
             if num_question >= 10:
                 return
             # hset.print_time("UH-Simplex", dataset, num_question, start_time)
-
+        '''
     # print results
     result = pset.points[get_current_best_pt(pset.points, C_idx, hset)]
     groudtruth = pset.find_top_k(u, 1)[0]
@@ -191,8 +208,10 @@ def max_utility(pset: PointSet, u: Point, s, epsilon, maxRound, cmp_option, stop
     print("Regret: ", rr)
     if cmp_option == constant.RANDOM:
         result.printAlgResult("UH-Random", num_question, start_time, 0)
-        result.printToFile("UH-Random", dataset, epsilon, num_question, start_time, rr)
+        result.printToFile2("UH-Random", dataset, epsilon, num_question, start_time, rr, 10000, 5)
+        pset.printFinal(result, num_question, u, "UH-Random", dataset, epsilon)
     else:
         result.printAlgResult("UH-Simplex", num_question, start_time, 0)
-        result.printToFile("UH-Simplex", dataset, epsilon, num_question, start_time, rr)
+        result.printToFile2("UH-Simplex", dataset, epsilon, num_question, start_time, rr, 10000, 5)
+        pset.printFinal(result, num_question, u, "UH-Simplex", dataset, epsilon)
 
