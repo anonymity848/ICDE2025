@@ -162,7 +162,6 @@ def highRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainni
     dim = pset.points[0].dim
     # action_space_size = 5
 
-    training_epsilon = 0.05
     # init agent
     brain = Agent(gamma=0.80, epsilon=0.9, alpha=0.003, maxMemorySize=5000, batch_size=64, action_space_size=action_space_size, dim=dim, is_gpu=True)
     if train:  # training
@@ -175,7 +174,7 @@ def highRL(pset: PointSet, u: Point, epsilon, dataset_name, train=False, trainni
             state = utility_range.get_state_high()  # part of state
             dist = np.linalg.norm(utility_range.upper_point.coord - utility_range.lower_point.coord)
             pivot_pt = pset.find_top_k(utility_range.sample_vector(), 1)[0]
-            while dist > training_epsilon * np.sqrt(dim) * 2:  # stopping condition
+            while dist > epsilon * np.sqrt(dim) * 2:  # stopping condition
                 h_cand = utility_range.find_candidate_hyperplanes(pset, action_space_size, pivot_pt, epsilon)
                 if len(h_cand) <= 0:
                     break
